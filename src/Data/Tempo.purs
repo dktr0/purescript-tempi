@@ -53,6 +53,15 @@ timeToCount x t = d' * x.freq + x.count
     d = unwrap (diff t x.time :: Milliseconds) -- difference as a Number in milliseconds
     d' = floor d % 1000 -- difference as a Rational in seconds
 
+-- | I think there might be numerical precision issues with timeToCount and PureScript's Rational type
+-- so am also experimenting with timeToCountNumber as well (it might have different precision issues...)
+
+timeToCountNumber :: Tempo -> DateTime -> Number
+timeToCountNumber x t = df + toNumber x.count
+  where
+    timeDiff = unwrap (diff t x.time :: Milliseconds) -- difference as a Number in milliseconds
+    df = timeDiff * toNumber x.freq / 1000.0
+
 
 -- | Given a Tempo and a count of elapsed cycles/beats, countToTime tells us when that "beat"
 -- will (or would have) take(n) place. (note: countToTime has the same caveat about a liminal potential
