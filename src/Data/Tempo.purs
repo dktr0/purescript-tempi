@@ -6,6 +6,7 @@ module Data.Tempo where
 
 import Prelude
 import Data.DateTime
+import Data.DateTime.Instant
 import Data.Time.Duration
 import Data.Rational
 import Data.Maybe
@@ -13,6 +14,7 @@ import Data.Newtype
 import Data.Int (floor)
 import Effect (Effect)
 import Effect.Now (nowDateTime)
+import Partial.Unsafe
 
 -- | Musical tempo is represented as a data structure with three orthogonal components.
 
@@ -58,3 +60,24 @@ timeToCount x t = d' * x.freq + x.count
 
 countToTime :: Tempo -> Rational -> DateTime
 countToTime x c = maybe x.time identity $ adjust (Seconds $ toNumber (c / x.freq)) (origin x)
+
+
+-- | ForeignTempo and fromForeignTempo are provided to facilitate constructing a Tempo
+-- with high precision numbers (Rationals) from basic JavaScript types. (For example, this
+-- should be useful in receiving Tempi that are "originally" expressed/produced by the
+-- Haskell tempi library when compiled with GHCJS and interacting with PureScript code.)
+
+type ForeignTempo = {
+  freqNumerator :: Int,
+  freqDenominator :: Int,
+  time :: Number, -- POSIX/epoch-1970 time, in milliseconds
+  countNumerator :: Int,
+  countDenominator :: Int
+ }
+
+fromForeignTempo :: ForeignTempo -> Tempo
+fromForeignTempo x = { freq, time, count }
+  where
+    freq = x.freqNumerator % x.freqDenominator
+    time = toDateTime $ unsafePartial $ fromJust $ instant $ Milliseconds x.time
+    count = x.countNumerator % x.countDenominator
