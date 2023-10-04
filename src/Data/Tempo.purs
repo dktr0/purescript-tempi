@@ -5,8 +5,8 @@ module Data.Tempo where
 
 
 import Prelude
-import Data.DateTime
-import Data.DateTime.Instant
+import Data.DateTime (DateTime, adjust, diff)
+import Data.DateTime.Instant (toDateTime, instant)
 import Data.Time.Duration
 import Data.Rational
 import Data.Maybe
@@ -15,6 +15,7 @@ import Data.Int (floor)
 import Effect (Effect)
 import Effect.Now (nowDateTime)
 import Partial.Unsafe
+import JS.BigInt (BigInt)
 
 -- | Musical tempo is represented as a data structure with three orthogonal components.
 
@@ -40,8 +41,7 @@ newTempo freq = do
 -- Tempo record as a kind of "default" value.)
 
 origin :: Tempo -> DateTime
-origin x = maybe x.time identity $ adjust (Milliseconds $ toNumber increment) x.time
-  where increment = x.count * (fromInt (-1000)) / x.freq
+origin x = countToTime x (0 % 0)
 
 
 -- | Given a Tempo and a clock time (DateTime), timeToCount tells us how many cycles/beats
@@ -50,8 +50,8 @@ origin x = maybe x.time identity $ adjust (Milliseconds $ toNumber increment) x.
 timeToCount :: Tempo -> DateTime -> Rational
 timeToCount x t = d' * x.freq + x.count
   where
-    d = unwrap (diff t x.time :: Milliseconds) -- difference as a Number in milliseconds
-    d' = floor d % 1000 -- difference as a Rational in seconds
+    d = unwrap (diff t x.time :: Milliseconds)
+    d' = floor d % 1000
 
 -- | I think there might be numerical precision issues with timeToCount and PureScript's Rational type
 -- so am also experimenting with timeToCountNumber as well (it might have different precision issues...)
@@ -59,7 +59,7 @@ timeToCount x t = d' * x.freq + x.count
 timeToCountNumber :: Tempo -> DateTime -> Number
 timeToCountNumber x t = df + toNumber x.count
   where
-    timeDiff = unwrap (diff t x.time :: Milliseconds) -- difference as a Number in milliseconds
+    timeDiff = unwrap (diff t x.time :: Milliseconds)
     df = timeDiff * toNumber x.freq / 1000.0
 
 
@@ -77,11 +77,11 @@ countToTime x c = maybe x.time identity $ adjust (Seconds $ toNumber (c / x.freq
 -- Haskell tempi library when compiled with GHCJS and interacting with PureScript code.)
 
 type ForeignTempo = {
-  freqNumerator :: Int,
-  freqDenominator :: Int,
+  freqNumerator :: BigInt,
+  freqDenominator :: BigInt,
   time :: Number, -- POSIX/epoch-1970 time, in milliseconds
-  countNumerator :: Int,
-  countDenominator :: Int
+  countNumerator :: BigInt,
+  countDenominator :: BigInt
  }
 
 fromForeignTempo :: ForeignTempo -> Tempo

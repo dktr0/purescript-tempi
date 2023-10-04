@@ -16,6 +16,7 @@ to generate this file without the comments in this block.
   , "datetime"
   , "effect"
   , "integers"
+  , "js-bigints"
   , "maybe"
   , "newtype"
   , "now"
