@@ -79,7 +79,7 @@ countToTime x c = maybe x.time identity $ adjust (Seconds $ toNumber (c / x.freq
 type ForeignTempo = {
   freqNumerator :: BigInt,
   freqDenominator :: BigInt,
-  time :: Number, -- POSIX/epoch-1970 time, in milliseconds
+  time :: Number, -- POSIX/epoch-1970 time, in seconds
   countNumerator :: BigInt,
   countDenominator :: BigInt
  }
@@ -88,5 +88,5 @@ fromForeignTempo :: ForeignTempo -> Tempo
 fromForeignTempo x = { freq, time, count }
   where
     freq = x.freqNumerator % x.freqDenominator
-    time = toDateTime $ unsafePartial $ fromJust $ instant $ Milliseconds x.time
+    time = toDateTime $ unsafePartial $ fromJust $ instant $ Milliseconds $ x.time * 1000.0
     count = x.countNumerator % x.countDenominator
