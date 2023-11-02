@@ -41,8 +41,9 @@ newTempo freq = do
 -- Tempo record as a kind of "default" value.)
 
 origin :: Tempo -> DateTime
-origin x = countToTime x (0 % 0)
-
+origin x = maybe x.time identity $ adjust (Seconds $ toNumber increment) x.time
+  where increment = x.count * (fromInt (-1)) / x.freq
+  
 
 -- | Given a Tempo and a clock time (DateTime), timeToCount tells us how many cycles/beats
 -- have elapsed at that time.
