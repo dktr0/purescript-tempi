@@ -91,3 +91,27 @@ fromForeignTempo x = { freq, time, count }
     freq = x.freqNumerator % x.freqDenominator
     time = toDateTime $ unsafePartial $ fromJust $ instant $ Milliseconds $ x.time * 1000.0
     count = x.countNumerator % x.countDenominator
+    
+    
+-- given a metre (eg. 4 beats) an offset (eg. every 2 beats after the 4 beat metre) and a value in those same units
+-- return the next moment in those units that matches the provided metre and offset. if the provide value is such
+-- a moment, then it is returned.
+nextBeat :: Rational -> Rational -> Rational -> Rational
+nextBeat metre offset x = (ceilingRational ((x-offset)/metre)) * metre + offset
+
+-- like nextBeat except that if the provided value matches the metre and offset it is not returned - the next moment
+-- that matches the specification is returned instead.
+nextBeatExclusive :: Rational -> Rational -> Rational -> Rational
+nextBeatExclusive metre offset x = (floorRational ((x-offset)/metre) + one) * metre + offset
+  
+-- used by nextBeat (above)
+ceilingRational :: Rational -> Rational
+ceilingRational x
+  | mod (numerator x) (denominator x) == zero = x
+  | otherwise = fromBigInt (div (numerator x) (denominator x) + one)
+
+-- used by nextBeatExclusive (above)
+floorRational :: Rational -> Rational
+floorRational x
+  | mod (numerator x) (denominator x) == zero = x
+  | otherwise = fromBigInt (div (numerator x) (denominator x))
