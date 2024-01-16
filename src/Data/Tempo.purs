@@ -4,17 +4,17 @@ module Data.Tempo where
 -- (and maintained by the same person.)
 
 
-import Prelude
+import Prelude (bind, div, identity, mod, negate, one, otherwise, pure, zero, ($), (*), (+), (-), (/), (==))
 import Data.DateTime (DateTime, adjust, diff)
 import Data.DateTime.Instant (toDateTime, instant)
-import Data.Time.Duration
-import Data.Rational
-import Data.Maybe
-import Data.Newtype
+import Data.Time.Duration (Milliseconds(..), Seconds(..))
+import Data.Rational (Rational, denominator, fromBigInt, fromInt, numerator, toNumber, (%))
+import Data.Maybe (fromJust, maybe)
+import Data.Newtype (unwrap)
 import Data.Int (floor)
 import Effect (Effect)
 import Effect.Now (nowDateTime)
-import Partial.Unsafe
+import Partial.Unsafe (unsafePartial)
 import JS.BigInt (BigInt)
 
 -- | Musical tempo is represented as a data structure with three orthogonal components.
@@ -43,7 +43,7 @@ newTempo freq = do
 origin :: Tempo -> DateTime
 origin x = maybe x.time identity $ adjust (Seconds $ toNumber increment) x.time
   where increment = x.count * (fromInt (-1)) / x.freq
-  
+
 
 -- | Given a Tempo and a clock time (DateTime), timeToCount tells us how many cycles/beats
 -- have elapsed at that time.
@@ -91,8 +91,8 @@ fromForeignTempo x = { freq, time, count }
     freq = x.freqNumerator % x.freqDenominator
     time = toDateTime $ unsafePartial $ fromJust $ instant $ Milliseconds $ x.time * 1000.0
     count = x.countNumerator % x.countDenominator
-    
-    
+
+
 -- given a metre (eg. 4 beats) an offset (eg. every 2 beats after the 4 beat metre) and a value in those same units
 -- return the next moment in those units that matches the provided metre and offset. if the provide value is such
 -- a moment, then it is returned.
@@ -103,7 +103,7 @@ nextBeat metre offset x = (ceilingRational ((x-offset)/metre)) * metre + offset
 -- that matches the specification is returned instead.
 nextBeatExclusive :: Rational -> Rational -> Rational -> Rational
 nextBeatExclusive metre offset x = (floorRational ((x-offset)/metre) + one) * metre + offset
-  
+
 -- used by nextBeat (above)
 ceilingRational :: Rational -> Rational
 ceilingRational x

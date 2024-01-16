@@ -22,7 +22,6 @@ to generate this file without the comments in this block.
   , "now"
   , "partial"
   , "prelude"
-  , "psci-support"
   , "rationals"
   ]
 , packages = ./packages.dhall
